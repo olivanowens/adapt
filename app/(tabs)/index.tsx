@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -26,6 +26,7 @@ export default function HomeScreen() {
   const { user } = useAuthStore();
 
   const [challengeDoneToday, setChallengeDoneToday] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Pick a daily item based on day of year
   const dayIndex = Math.floor(Date.now() / 86400000) % TECH_OF_THE_DAY.length;
@@ -43,8 +44,8 @@ export default function HomeScreen() {
   const displayName = user?.user_metadata?.full_name ?? 'there';
 
   useEffect(() => {
-    loadFromSupabase();
-    checkAndUpdateStreak();
+    Promise.all([loadFromSupabase(), checkAndUpdateStreak()])
+      .finally(() => setLoading(false));
   }, []);
 
   function handleCompleteChallenge() {
@@ -52,6 +53,14 @@ export default function HomeScreen() {
     addXP(XP_VALUES.COMPLETE_CHALLENGE);
     setChallengeDoneToday(true);
     sendChallengeCompleteNotification();
+  }
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: c.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={c.tint} />
+      </View>
+    );
   }
 
   return (

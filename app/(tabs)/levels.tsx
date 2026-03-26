@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
@@ -19,6 +19,26 @@ export default function LevelsScreen() {
   const trackIcon = DEVICE_TRACKS.find(t => t.id === track)?.icon ?? '📱';
 
   const levelsDescending = [...levels].reverse();
+
+  // Empty state — no track selected yet
+  if (!selectedTrack) {
+    return (
+      <View style={[styles.container, { backgroundColor: c.background, justifyContent: 'center', alignItems: 'center', padding: 40 }]}>
+        <ThemedText style={{ fontSize: 56, marginBottom: 20 }}>📱</ThemedText>
+        <ThemedText style={{ fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 10 }}>
+          Choose Your Device
+        </ThemedText>
+        <ThemedText style={{ fontSize: 15, color: c.icon, textAlign: 'center', lineHeight: 24, marginBottom: 32 }}>
+          Pick the device you want to learn about to see your levels and lessons.
+        </ThemedText>
+        <TouchableOpacity
+          style={[styles.switchBtn, { backgroundColor: c.tint, borderColor: c.tint, paddingHorizontal: 28, paddingVertical: 14 }]}
+          onPress={() => router.push('/select-track')}>
+          <ThemedText style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Pick a Device →</ThemedText>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView

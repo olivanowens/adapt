@@ -10,11 +10,15 @@ import { DEVICE_TRACKS, DeviceTrack } from '@/data/curriculum';
 export default function SelectTrackScreen() {
   const c = Colors[useColorScheme() ?? 'light'];
   const insets = useSafeAreaInsets();
-  const { setSelectedTrack, selectedTrack } = useUserStore();
+  const { setSelectedTrack, selectedTrack, placementDone } = useUserStore();
 
   function handleSelect(track: DeviceTrack) {
     setSelectedTrack(track);
-    router.back();
+    if (!placementDone[track]) {
+      router.replace({ pathname: '/placement-test', params: { track } });
+    } else {
+      router.back();
+    }
   }
 
   return (

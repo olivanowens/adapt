@@ -1,18 +1,20 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUserStore } from '@/store/useUserStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { XPToast } from '@/components/xp-toast';
 import { LevelUpModal } from '@/components/level-up-modal';
 import { XP_VALUES } from '@/constants/xp';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const c = Colors[colorScheme];
+  const insets = useSafeAreaInsets();
 
   const {
     xp, level, streak, levelThresholds,
@@ -21,7 +23,6 @@ export default function HomeScreen() {
   } = useUserStore();
   const { user } = useAuthStore();
 
-  const [xpToast, setXpToast] = useState<number | null>(null);
   const [challengeDoneToday, setChallengeDoneToday] = useState(false);
 
   const currentThreshold = levelThresholds[level - 1] ?? 0;
@@ -41,23 +42,29 @@ export default function HomeScreen() {
   function handleCompleteChallenge() {
     if (challengeDoneToday) return;
     addXP(XP_VALUES.COMPLETE_CHALLENGE);
-    setXpToast(XP_VALUES.COMPLETE_CHALLENGE);
     setChallengeDoneToday(true);
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView
-        style={[styles.container, { backgroundColor: c.background }]}
-        contentContainerStyle={styles.content}>
+        style={styles.container}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}>
 
         {/* Header */}
-        <ThemedView style={styles.header}>
-          <ThemedText style={styles.appName}>ADAPT</ThemedText>
-          <ThemedText style={[styles.greeting, { color: c.icon }]}>
-            Welcome back, {displayName.split(' ')[0]} 👋
-          </ThemedText>
-        </ThemedView>
+        <View style={styles.header}>
+          <View>
+            <ThemedText style={styles.appName}>ADAPT</ThemedText>
+            <ThemedText style={[styles.greeting, { color: c.icon }]}>
+              Welcome back, {displayName.split(' ')[0]} 👋
+            </ThemedText>
+          </View>
+          <TouchableOpacity
+            style={[styles.settingsBtn, { backgroundColor: c.card }]}
+            onPress={() => router.push('/edit-profile')}>
+            <ThemedText style={styles.settingsIcon}>⚙️</ThemedText>
+          </TouchableOpacity>
+        </View>
 
         {/* Today's Focus Card */}
         <View style={[styles.focusCard, { backgroundColor: c.tint }]}>
@@ -80,7 +87,7 @@ export default function HomeScreen() {
           </ThemedView>
           <ThemedView style={[styles.statCard, { borderColor: c.icon }]}>
             <ThemedText style={styles.statValue}>Lv {level}</ThemedText>
-            <ThemedText style={[styles.statLabel, { color: c.icon }]}>Current Level</ThemedText>
+            <ThemedText style={[styles.statLabel, { color: c.icon }]}>Level</ThemedText>
           </ThemedView>
           <ThemedView style={[styles.statCard, { borderColor: c.icon }]}>
             <ThemedText style={styles.statValue}>{xp}</ThemedText>
@@ -92,16 +99,11 @@ export default function HomeScreen() {
         <ThemedView style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
           <TouchableOpacity
-            style={[
-              styles.actionBtn,
-              { backgroundColor: challengeDoneToday ? c.icon : c.tint },
-            ]}
+            style={[styles.actionBtn, { backgroundColor: challengeDoneToday ? c.icon : c.tint }]}
             onPress={handleCompleteChallenge}
             disabled={challengeDoneToday}>
             <ThemedText style={styles.actionBtnText}>
-              {challengeDoneToday
-                ? '✓ Challenge Complete'
-                : `Complete Today's Challenge (+${XP_VALUES.COMPLETE_CHALLENGE} XP)`}
+              {challengeDoneToday ? '✓ Challenge Complete' : "Complete Today's Challenge"}
             </ThemedText>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionBtnOutline, { borderColor: c.tint }]}>
@@ -113,12 +115,6 @@ export default function HomeScreen() {
 
       </ScrollView>
 
-      {/* XP Toast */}
-      {xpToast !== null && (
-        <XPToast amount={xpToast} onDone={() => setXpToast(null)} />
-      )}
-
-      {/* Level Up Modal */}
       {justLeveledUp !== null && (
         <LevelUpModal newLevel={justLeveledUp} onClose={clearLevelUp} />
       )}
@@ -128,10 +124,12 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 24, paddingTop: 60 },
-  header: { marginBottom: 24 },
+  content: { padding: 24, paddingBottom: 40 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
   appName: { fontSize: 32, fontWeight: '800', letterSpacing: 2 },
   greeting: { fontSize: 16, marginTop: 4 },
+  settingsBtn: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
+  settingsIcon: { fontSize: 20 },
   focusCard: { borderRadius: 16, padding: 24, marginBottom: 24 },
   focusLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, color: '#fff', opacity: 0.8, marginBottom: 8 },
   focusTitle: { fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 4 },

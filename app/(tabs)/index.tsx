@@ -10,6 +10,7 @@ import { useUserStore } from '@/store/useUserStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { LevelUpModal } from '@/components/level-up-modal';
 import { XP_VALUES } from '@/constants/xp';
+import { TECH_OF_THE_DAY, VOCAB_OF_THE_DAY } from '@/data/curriculum';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -24,6 +25,12 @@ export default function HomeScreen() {
   const { user } = useAuthStore();
 
   const [challengeDoneToday, setChallengeDoneToday] = useState(false);
+
+  // Pick a daily item based on day of year
+  const dayIndex = Math.floor(Date.now() / 86400000) % TECH_OF_THE_DAY.length;
+  const vocabIndex = Math.floor(Date.now() / 86400000) % VOCAB_OF_THE_DAY.length;
+  const todayTech = TECH_OF_THE_DAY[dayIndex];
+  const todayVocab = VOCAB_OF_THE_DAY[vocabIndex];
 
   const currentThreshold = levelThresholds[level - 1] ?? 0;
   const nextThreshold = levelThresholds[level] ?? xp;
@@ -95,6 +102,20 @@ export default function HomeScreen() {
           </ThemedView>
         </ThemedView>
 
+        {/* Tech of the Day */}
+        <View style={[styles.dailyCard, { backgroundColor: c.card }]}>
+          <ThemedText style={[styles.dailyLabel, { color: c.tint }]}>TECH OF THE DAY</ThemedText>
+          <ThemedText style={[styles.dailyTerm, { color: c.text }]}>{todayTech.term}</ThemedText>
+          <ThemedText style={[styles.dailyDef, { color: c.icon }]}>{todayTech.definition}</ThemedText>
+        </View>
+
+        {/* Vocab of the Day */}
+        <View style={[styles.dailyCard, { backgroundColor: c.card }]}>
+          <ThemedText style={[styles.dailyLabel, { color: c.tint }]}>VOCAB OF THE DAY</ThemedText>
+          <ThemedText style={[styles.dailyTerm, { color: c.text }]}>{todayVocab.word}</ThemedText>
+          <ThemedText style={[styles.dailyDef, { color: c.icon }]}>{todayVocab.meaning}</ThemedText>
+        </View>
+
         {/* Quick Actions */}
         <ThemedView style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
@@ -147,4 +168,8 @@ const styles = StyleSheet.create({
   actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   actionBtnOutline: { borderRadius: 12, borderWidth: 2, padding: 16, alignItems: 'center' },
   actionBtnOutlineText: { fontWeight: '700', fontSize: 16 },
+  dailyCard: { borderRadius: 14, padding: 18, marginBottom: 14 },
+  dailyLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, marginBottom: 6 },
+  dailyTerm: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
+  dailyDef: { fontSize: 14, lineHeight: 21 },
 });

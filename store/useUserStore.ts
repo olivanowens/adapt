@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { LEVEL_THRESHOLDS } from '@/constants/xp';
+import type { DeviceTrack } from '@/data/curriculum';
 
 function calcLevel(xp: number): number {
   let level = 1;
@@ -28,6 +29,12 @@ interface UserState {
   // Theme
   isDarkMode: boolean;
 
+  // Learning
+  selectedTrack: DeviceTrack | null;
+  unlockedLevels: Record<string, number>; // track -> highest unlocked level
+  completedLessons: string[]; // lesson IDs
+  quizAttempts: Record<string, number>; // levelKey -> attempts used
+
   // Level-up notification
   justLeveledUp: number | null; // the new level number, null if no level-up
 
@@ -36,6 +43,11 @@ interface UserState {
   xpToNext: () => number;
 
   // Actions
+  setSelectedTrack: (track: DeviceTrack) => void;
+  completeLesson: (lessonId: string, xp: number) => void;
+  unlockNextLevel: (track: DeviceTrack, level: number) => void;
+  recordQuizAttempt: (track: DeviceTrack, level: number) => void;
+  getUnlockedLevel: (track: DeviceTrack) => number;
   addXP: (amount: number) => void;
   clearLevelUp: () => void;
   setName: (name: string) => void;
@@ -62,6 +74,10 @@ export const useUserStore = create<UserState>()(
       isDarkMode: false,
       justLeveledUp: null,
       levelThresholds: LEVEL_THRESHOLDS,
+      selectedTrack: null,
+      unlockedLevels: {},
+      completedLessons: [],
+      quizAttempts: {},
 
       xpToNext: () => {
         const { xp, level } = get();
@@ -84,6 +100,34 @@ export const useUserStore = create<UserState>()(
       },
 
       clearLevelUp: () => set({ justLeveledUp: null }),
+
+      setSelectedTrack: (track) => set({ selectedTrack: track }),
+
+      completeLesson: (lessonId, xp) => {
+        const { completedLessons } = get();
+        if (completedLessons.includes(lessonId)) return;
+        set({ completedLessons: [...completedLessons, lessonId] });
+        get().addXP(xp);
+      },
+
+      unlockNextLevel: (track, currentLevel) => {
+        const { unlockedLevels } = get();
+        const key = track;
+        const current = unlockedLevels[key] ?? 1;
+        if (currentLevel >= current) {
+          set({ unlockedLevels: { ...unlockedLevels, [key]: currentLevel + 1 } });
+        }
+      },
+
+      recordQuizAttempt: (track, level) => {
+        const key = `${track}-${level}`;
+        const { quizAttempts } = get();
+        set({ quizAttempts: { ...quizAttempts, [key]: (quizAttempts[key] ?? 0) + 1 } });
+      },
+
+      getUnlockedLevel: (track) => {
+        return get().unlockedLevels[track] ?? 1;
+      },
 
       setName: (name) => set({ name }),
       setUsername: (username) => set({ username }),

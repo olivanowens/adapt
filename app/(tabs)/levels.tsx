@@ -1,83 +1,105 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUserStore } from '@/store/useUserStore';
-
-const LEVELS_DATA = [
-  { level: 1,  title: 'Level 1',  subtitle: 'Getting Started',     xpRequired: 0     },
-  { level: 2,  title: 'Level 2',  subtitle: 'Building Habits',      xpRequired: 100   },
-  { level: 3,  title: 'Level 3',  subtitle: 'Calling & Contacts',   xpRequired: 250   },
-  { level: 4,  title: 'Level 4',  subtitle: 'Deep Focus',           xpRequired: 500   },
-  { level: 5,  title: 'Level 5',  subtitle: 'Mental Strength',      xpRequired: 900   },
-  { level: 6,  title: 'Level 6',  subtitle: 'Leadership',           xpRequired: 1500  },
-  { level: 7,  title: 'Level 7',  subtitle: 'Resilience',           xpRequired: 2500  },
-  { level: 8,  title: 'Level 8',  subtitle: 'Mastery',              xpRequired: 4000  },
-  { level: 9,  title: 'Level 9',  subtitle: 'Elite Performance',    xpRequired: 6000  },
-  { level: 10, title: 'Level 10', subtitle: 'ADAPT Master',         xpRequired: 10000 },
-];
+import { CURRICULUM, DEVICE_TRACKS } from '@/data/curriculum';
 
 export default function LevelsScreen() {
-  const colorScheme = useColorScheme() ?? 'light';
-  const c = Colors[colorScheme];
-  const { level: currentLevel } = useUserStore();
+  const c = Colors[useColorScheme() ?? 'light'];
+  const insets = useSafeAreaInsets();
+  const { selectedTrack, getUnlockedLevel, completedLessons } = useUserStore();
 
-  // Render top-to-bottom: 10 down to 1
-  const levelsDescending = [...LEVELS_DATA].reverse();
+  const track = selectedTrack ?? 'iphone';
+  const levels = CURRICULUM[track] ?? [];
+  const unlockedLevel = getUnlockedLevel(track);
+  const trackLabel = DEVICE_TRACKS.find(t => t.id === track)?.label ?? 'iPhone';
+  const trackIcon = DEVICE_TRACKS.find(t => t.id === track)?.icon ?? '📱';
+
+  const levelsDescending = [...levels].reverse();
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: c.background }]}
-      contentContainerStyle={styles.content}>
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}>
 
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <ThemedText style={styles.title}>Levels</ThemedText>
+          <ThemedText style={[styles.subtitle, { color: c.icon }]}>
+            {trackIcon} {trackLabel} Track
+          </ThemedText>
+        </View>
+        <TouchableOpacity
+          style={[styles.switchBtn, { backgroundColor: c.card, borderColor: c.line }]}
+          onPress={() => router.push('/select-track')}>
+          <ThemedText style={[styles.switchText, { color: c.tint }]}>Switch</ThemedText>
+        </TouchableOpacity>
+      </View>
+
+      {/* Path */}
       <View style={styles.pathContainer}>
-        {/* Vertical connecting line */}
         <View style={[styles.connectingLine, { backgroundColor: c.line }]} />
 
-        {levelsDescending.map((item, index) => {
-          const isCompleted = item.level < currentLevel;
-          const isCurrent = item.level === currentLevel;
-          const isLocked = item.level > currentLevel;
-          const stepsAboveCurrent = item.level - currentLevel;
-          const opacity = isLocked ? Math.max(0.2, 1 - stepsAboveCurrent * 0.12) : 1;
+        {levelsDescending.map((lvl) => {
+          const isCompleted = lvl.level < unlockedLevel;
+          const isCurrent = lvl.level === unlockedLevel;
+          const isLocked = lvl.level > unlockedLevel;
+          const stepsAbove = lvl.level - unlockedLevel;
+          const opacity = isLocked ? Math.max(0.2, 1 - stepsAbove * 0.12) : 1;
+
+          const lessonsCompleted = lvl.miniLessons.filter(l => completedLessons.includes(l.id)).length;
+          const totalLessons = lvl.miniLessons.length;
 
           return (
-            <View key={item.level} style={[styles.levelRow, { opacity }]}>
+            <TouchableOpacity
+              key={lvl.level}
+              style={[styles.levelRow, { opacity }]}
+              onPress={() => {
+                if (!isLocked) {
+                  router.push({
+                    pathname: '/lesson',
+                    params: { track, levelNum: String(lvl.level), lessonIndex: '0' },
+                  });
+                }
+              }}
+              disabled={isLocked}>
 
-              {/* ── CURRENT level card ── */}
               {isCurrent && (
                 <View style={[styles.currentCard, { backgroundColor: c.background, borderColor: c.line }]}>
                   <View style={styles.currentCardHeader}>
                     <ThemedText style={styles.starIcon}>⭐</ThemedText>
-                    <ThemedText style={[styles.currentTitle, { color: c.text }]}>{item.title}</ThemedText>
+                    <ThemedText style={[styles.currentTitle, { color: c.text }]}>Level {lvl.level}</ThemedText>
                   </View>
-                  <ThemedText style={[styles.currentSubtitle, { color: c.text }]}>{item.subtitle}</ThemedText>
-                  <ThemedText style={[styles.currentUnlocks, { color: c.icon }]}>→ Unlocks sub-lessons</ThemedText>
+                  <ThemedText style={[styles.currentSubtitle, { color: c.text }]}>{lvl.title}</ThemedText>
+                  <ThemedText style={[styles.currentUnlocks, { color: c.icon }]}>
+                    {lessonsCompleted}/{totalLessons} lessons · Tap to continue →
+                  </ThemedText>
                 </View>
               )}
 
-              {/* ── COMPLETED level card ── */}
               {isCompleted && (
                 <View style={[styles.completedCard, { backgroundColor: c.completedCard }]}>
                   <ThemedText style={styles.completedCheck}>✓</ThemedText>
-                  <ThemedText style={styles.completedTitle}>{item.title}</ThemedText>
-                  <ThemedText style={styles.lockIcon}>🔒</ThemedText>
+                  <ThemedText style={styles.completedTitle}>Level {lvl.level} — {lvl.title}</ThemedText>
                 </View>
               )}
 
-              {/* ── LOCKED level card ── */}
               {isLocked && (
                 <View style={[styles.lockedCard, { backgroundColor: c.card }]}>
                   <ThemedText style={[styles.lockedTitle, { color: c.text }]}>
-                    {item.title.toUpperCase()}
+                    LEVEL {lvl.level}
                   </ThemedText>
-                  {stepsAboveCurrent === 1 && (
-                    <ThemedText style={[styles.lockIcon, { opacity: 0.6 }]}>🔒</ThemedText>
+                  {stepsAbove === 1 && (
+                    <ThemedText style={{ fontSize: 16, opacity: 0.6 }}>🔒</ThemedText>
                   )}
                 </View>
               )}
 
-            </View>
+            </TouchableOpacity>
           );
         })}
       </View>
@@ -87,72 +109,24 @@ export default function LevelsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingVertical: 40, paddingHorizontal: 24 },
-
-  pathContainer: {
-    position: 'relative',
-    alignItems: 'center',
-  },
-
-  connectingLine: {
-    position: 'absolute',
-    width: 2,
-    top: 0,
-    bottom: 0,
-    left: '50%',
-    marginLeft: -1,
-  },
-
-  levelRow: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 12,
-    zIndex: 1,
-  },
-
-  // Current
-  currentCard: {
-    width: '90%',
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderRadius: 16,
-    padding: 18,
-  },
-  currentCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
+  content: { padding: 24, paddingBottom: 40 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
+  title: { fontSize: 32, fontWeight: '800' },
+  subtitle: { fontSize: 15, marginTop: 4 },
+  switchBtn: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8, marginTop: 4 },
+  switchText: { fontSize: 14, fontWeight: '600' },
+  pathContainer: { position: 'relative', alignItems: 'center' },
+  connectingLine: { position: 'absolute', width: 2, top: 0, bottom: 0, left: '50%', marginLeft: -1 },
+  levelRow: { width: '100%', alignItems: 'center', marginBottom: 12, zIndex: 1 },
+  currentCard: { width: '90%', borderWidth: 2, borderStyle: 'dashed', borderRadius: 16, padding: 18 },
+  currentCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   starIcon: { fontSize: 20 },
   currentTitle: { fontSize: 22, fontWeight: '700' },
   currentSubtitle: { fontSize: 15, fontWeight: '500', marginBottom: 4 },
   currentUnlocks: { fontSize: 13 },
-
-  // Completed
-  completedCard: {
-    width: '85%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    gap: 10,
-  },
+  completedCard: { width: '85%', flexDirection: 'row', alignItems: 'center', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 18, gap: 10 },
   completedCheck: { fontSize: 18, color: '#fff', fontWeight: '700' },
-  completedTitle: { flex: 1, fontSize: 18, fontWeight: '600', color: '#fff' },
-  lockIcon: { fontSize: 16 },
-
-  // Locked
-  lockedCard: {
-    width: '82%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    gap: 10,
-  },
+  completedTitle: { flex: 1, fontSize: 15, fontWeight: '600', color: '#fff' },
+  lockedCard: { width: '82%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 18, gap: 10 },
   lockedTitle: { fontSize: 14, fontWeight: '600', letterSpacing: 1.5, flex: 1, textAlign: 'center' },
 });

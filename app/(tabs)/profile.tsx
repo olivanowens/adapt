@@ -12,6 +12,7 @@ import {
   scheduleDailyStreakReminder,
   cancelAllNotifications,
 } from '@/lib/notifications';
+import { supabase } from '@/lib/supabase';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -60,6 +61,25 @@ export default function ProfileScreen() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: signOut },
     ]);
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account and all your progress. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Forever',
+          style: 'destructive',
+          onPress: async () => {
+            await cancelAllNotifications();
+            await supabase.from('profiles').delete().eq('id', user?.id ?? '');
+            await signOut();
+          },
+        },
+      ],
+    );
   }
 
   return (
@@ -126,8 +146,9 @@ export default function ProfileScreen() {
 
         {[
           { label: 'Edit Profile', icon: '✏️', onPress: () => router.push('/edit-profile') },
-          { label: 'Privacy', icon: '🔒', onPress: undefined },
-          { label: 'Help & Support', icon: '💬', onPress: undefined },
+          { label: 'Privacy Policy', icon: '🔒', onPress: () => router.push('/settings/privacy') },
+          { label: 'Terms of Service', icon: '📄', onPress: () => router.push('/settings/terms') },
+          { label: 'Help & Support', icon: '💬', onPress: () => router.push('/settings/help') },
         ].map((item, index, arr) => (
           <TouchableOpacity
             key={item.label}
@@ -144,10 +165,17 @@ export default function ProfileScreen() {
         ))}
 
         <TouchableOpacity
-          style={[styles.settingRow, styles.lastRow, { borderColor: colors.icon }]}
+          style={[styles.settingRow, { borderColor: colors.icon }]}
           onPress={handleSignOut}>
           <ThemedText style={styles.settingIcon}>🚪</ThemedText>
           <ThemedText style={[styles.settingLabel, { color: '#C0392B' }]}>Sign Out</ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.settingRow, styles.lastRow, { borderColor: colors.icon }]}
+          onPress={handleDeleteAccount}>
+          <ThemedText style={styles.settingIcon}>🗑️</ThemedText>
+          <ThemedText style={[styles.settingLabel, { color: '#C0392B' }]}>Delete Account</ThemedText>
         </TouchableOpacity>
       </ThemedView>
 

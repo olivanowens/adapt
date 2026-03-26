@@ -1,16 +1,28 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUserStore } from '@/store/useUserStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { XPToast } from '@/components/xp-toast';
+import { LevelUpModal } from '@/components/level-up-modal';
+import { XP_VALUES } from '@/constants/xp';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
-  const colors = Colors[colorScheme];
+  const c = Colors[colorScheme];
 
-  const { name, xp, level, streak, levelThresholds, checkAndUpdateStreak, addXP } = useUserStore();
+  const {
+    xp, level, streak, levelThresholds,
+    checkAndUpdateStreak, addXP, loadFromSupabase,
+    justLeveledUp, clearLevelUp,
+  } = useUserStore();
+  const { user } = useAuthStore();
+
+  const [xpToast, setXpToast] = useState<number | null>(null);
+  const [challengeDoneToday, setChallengeDoneToday] = useState(false);
 
   const currentThreshold = levelThresholds[level - 1] ?? 0;
   const nextThreshold = levelThresholds[level] ?? xp;
@@ -19,70 +31,98 @@ export default function HomeScreen() {
     : 1;
   const xpToNext = nextThreshold - xp;
 
+  const displayName = user?.user_metadata?.full_name ?? 'there';
+
   useEffect(() => {
+    loadFromSupabase();
     checkAndUpdateStreak();
   }, []);
 
+  function handleCompleteChallenge() {
+    if (challengeDoneToday) return;
+    addXP(XP_VALUES.COMPLETE_CHALLENGE);
+    setXpToast(XP_VALUES.COMPLETE_CHALLENGE);
+    setChallengeDoneToday(true);
+  }
+
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}>
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: c.background }]}
+        contentContainerStyle={styles.content}>
 
-      {/* Header */}
-      <ThemedView style={styles.header}>
-        <ThemedText style={styles.appName}>ADAPT</ThemedText>
-        <ThemedText style={[styles.greeting, { color: colors.icon }]}>
-          Welcome back, {name.split(' ')[0]} 👋
-        </ThemedText>
-      </ThemedView>
-
-      {/* Today's Focus Card */}
-      <View style={[styles.focusCard, { backgroundColor: colors.tint }]}>
-        <ThemedText style={styles.focusLabel}>TODAY'S FOCUS</ThemedText>
-        <ThemedText style={styles.focusTitle}>Keep the streak alive</ThemedText>
-        <ThemedText style={styles.focusSub}>Complete today's challenge to earn XP</ThemedText>
-
-        {/* Progress bar */}
-        <View style={styles.progressBg}>
-          <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
-        </View>
-        <ThemedText style={styles.progressText}>
-          {xp} XP — {xpToNext > 0 ? `${xpToNext} XP to Level ${level + 1}` : 'Max Level!'}
-        </ThemedText>
-      </View>
-
-      {/* Stats Row */}
-      <ThemedView style={styles.statsRow}>
-        <ThemedView style={[styles.statCard, { borderColor: colors.icon }]}>
-          <ThemedText style={styles.statValue}>{streak}</ThemedText>
-          <ThemedText style={[styles.statLabel, { color: colors.icon }]}>Day Streak</ThemedText>
-        </ThemedView>
-        <ThemedView style={[styles.statCard, { borderColor: colors.icon }]}>
-          <ThemedText style={styles.statValue}>Lv {level}</ThemedText>
-          <ThemedText style={[styles.statLabel, { color: colors.icon }]}>Current Level</ThemedText>
-        </ThemedView>
-        <ThemedView style={[styles.statCard, { borderColor: colors.icon }]}>
-          <ThemedText style={styles.statValue}>{xp}</ThemedText>
-          <ThemedText style={[styles.statLabel, { color: colors.icon }]}>Total XP</ThemedText>
-        </ThemedView>
-      </ThemedView>
-
-      {/* Quick Actions */}
-      <ThemedView style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
-        <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: colors.tint }]}
-          onPress={() => addXP(50)}>
-          <ThemedText style={styles.actionBtnText}>Complete Today's Challenge (+50 XP)</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionBtnOutline, { borderColor: colors.tint }]}>
-          <ThemedText style={[styles.actionBtnOutlineText, { color: colors.tint }]}>
-            View My Progress
+        {/* Header */}
+        <ThemedView style={styles.header}>
+          <ThemedText style={styles.appName}>ADAPT</ThemedText>
+          <ThemedText style={[styles.greeting, { color: c.icon }]}>
+            Welcome back, {displayName.split(' ')[0]} 👋
           </ThemedText>
-        </TouchableOpacity>
-      </ThemedView>
+        </ThemedView>
 
-    </ScrollView>
+        {/* Today's Focus Card */}
+        <View style={[styles.focusCard, { backgroundColor: c.tint }]}>
+          <ThemedText style={styles.focusLabel}>TODAY'S FOCUS</ThemedText>
+          <ThemedText style={styles.focusTitle}>Keep the streak alive</ThemedText>
+          <ThemedText style={styles.focusSub}>Complete today's challenge to earn XP</ThemedText>
+          <View style={styles.progressBg}>
+            <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
+          </View>
+          <ThemedText style={styles.progressText}>
+            {xp} XP — {xpToNext > 0 ? `${xpToNext} XP to Level ${level + 1}` : 'Max Level!'}
+          </ThemedText>
+        </View>
+
+        {/* Stats Row */}
+        <ThemedView style={styles.statsRow}>
+          <ThemedView style={[styles.statCard, { borderColor: c.icon }]}>
+            <ThemedText style={styles.statValue}>{streak}</ThemedText>
+            <ThemedText style={[styles.statLabel, { color: c.icon }]}>Day Streak</ThemedText>
+          </ThemedView>
+          <ThemedView style={[styles.statCard, { borderColor: c.icon }]}>
+            <ThemedText style={styles.statValue}>Lv {level}</ThemedText>
+            <ThemedText style={[styles.statLabel, { color: c.icon }]}>Current Level</ThemedText>
+          </ThemedView>
+          <ThemedView style={[styles.statCard, { borderColor: c.icon }]}>
+            <ThemedText style={styles.statValue}>{xp}</ThemedText>
+            <ThemedText style={[styles.statLabel, { color: c.icon }]}>Total XP</ThemedText>
+          </ThemedView>
+        </ThemedView>
+
+        {/* Quick Actions */}
+        <ThemedView style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
+          <TouchableOpacity
+            style={[
+              styles.actionBtn,
+              { backgroundColor: challengeDoneToday ? c.icon : c.tint },
+            ]}
+            onPress={handleCompleteChallenge}
+            disabled={challengeDoneToday}>
+            <ThemedText style={styles.actionBtnText}>
+              {challengeDoneToday
+                ? '✓ Challenge Complete'
+                : `Complete Today's Challenge (+${XP_VALUES.COMPLETE_CHALLENGE} XP)`}
+            </ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtnOutline, { borderColor: c.tint }]}>
+            <ThemedText style={[styles.actionBtnOutlineText, { color: c.tint }]}>
+              View My Progress
+            </ThemedText>
+          </TouchableOpacity>
+        </ThemedView>
+
+      </ScrollView>
+
+      {/* XP Toast */}
+      {xpToast !== null && (
+        <XPToast amount={xpToast} onDone={() => setXpToast(null)} />
+      )}
+
+      {/* Level Up Modal */}
+      {justLeveledUp !== null && (
+        <LevelUpModal newLevel={justLeveledUp} onClose={clearLevelUp} />
+      )}
+    </View>
   );
 }
 
@@ -93,16 +133,10 @@ const styles = StyleSheet.create({
   appName: { fontSize: 32, fontWeight: '800', letterSpacing: 2 },
   greeting: { fontSize: 16, marginTop: 4 },
   focusCard: { borderRadius: 16, padding: 24, marginBottom: 24 },
-  focusLabel: {
-    fontSize: 11, fontWeight: '700', letterSpacing: 1.5,
-    color: '#fff', opacity: 0.8, marginBottom: 8,
-  },
+  focusLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, color: '#fff', opacity: 0.8, marginBottom: 8 },
   focusTitle: { fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 4 },
   focusSub: { fontSize: 14, color: '#fff', opacity: 0.85, marginBottom: 16 },
-  progressBg: {
-    height: 8, backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 4, marginBottom: 8,
-  },
+  progressBg: { height: 8, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 4, marginBottom: 8 },
   progressFill: { height: 8, backgroundColor: '#fff', borderRadius: 4 },
   progressText: { fontSize: 13, color: '#fff', opacity: 0.85 },
   statsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },

@@ -1,15 +1,20 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity, Switch } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Switch, Alert } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUserStore } from '@/store/useUserStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
 
   const { name, username, xp, level, streak, daysActive, isDarkMode, toggleDarkMode } = useUserStore();
+  const { signOut, user } = useAuthStore();
+
+  const displayName = user?.user_metadata?.full_name ?? name;
+  const displayEmail = user?.email ?? '';
 
   const stats = [
     { label: 'Level', value: String(level) },
@@ -18,7 +23,14 @@ export default function ProfileScreen() {
     { label: 'Days Active', value: String(daysActive) },
   ];
 
-  const firstLetter = name ? name[0].toUpperCase() : 'A';
+  const firstLetter = displayName ? displayName[0].toUpperCase() : 'A';
+
+  function handleSignOut() {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: signOut },
+    ]);
+  }
 
   return (
     <ScrollView
@@ -30,8 +42,8 @@ export default function ProfileScreen() {
         <View style={[styles.avatar, { backgroundColor: colors.tint }]}>
           <ThemedText style={styles.avatarText}>{firstLetter}</ThemedText>
         </View>
-        <ThemedText style={styles.name}>{name}</ThemedText>
-        <ThemedText style={[styles.username, { color: colors.icon }]}>{username}</ThemedText>
+        <ThemedText style={styles.name}>{displayName}</ThemedText>
+        <ThemedText style={[styles.username, { color: colors.icon }]}>{displayEmail || username}</ThemedText>
       </ThemedView>
 
       {/* Stats Grid */}
@@ -65,7 +77,6 @@ export default function ProfileScreen() {
           { label: 'Notifications', icon: '🔔' },
           { label: 'Privacy', icon: '🔒' },
           { label: 'Help & Support', icon: '💬' },
-          { label: 'Sign Out', icon: '🚪' },
         ].map((item, index, arr) => (
           <TouchableOpacity
             key={item.label}
@@ -79,6 +90,13 @@ export default function ProfileScreen() {
             <ThemedText style={[styles.chevron, { color: colors.icon }]}>›</ThemedText>
           </TouchableOpacity>
         ))}
+
+        <TouchableOpacity
+          style={[styles.settingRow, styles.lastRow, { borderColor: colors.icon }]}
+          onPress={handleSignOut}>
+          <ThemedText style={styles.settingIcon}>🚪</ThemedText>
+          <ThemedText style={[styles.settingLabel, { color: '#C0392B' }]}>Sign Out</ThemedText>
+        </TouchableOpacity>
       </ThemedView>
 
     </ScrollView>

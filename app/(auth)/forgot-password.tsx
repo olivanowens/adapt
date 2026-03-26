@@ -11,7 +11,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 
 export default function ForgotPasswordScreen() {
   const c = Colors[useColorScheme() ?? 'light'];
-  const { resetPassword, isLoading, clearError } = useAuthStore();
+  const { resetPassword, isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState('');
 
   async function handleReset() {
@@ -26,6 +26,8 @@ export default function ForgotPasswordScreen() {
         'Check your inbox for a password reset link.',
         [{ text: 'Back to Login', onPress: () => router.replace('/(auth)/login') }]
       );
+    } else {
+      Alert.alert('Something went wrong', error ?? 'Please check your email and try again.');
     }
   }
 

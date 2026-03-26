@@ -5,6 +5,7 @@ import {
   Alert, ScrollView, Image,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
@@ -15,6 +16,7 @@ import { supabase } from '@/lib/supabase';
 
 export default function EditProfileScreen() {
   const c = Colors[useColorScheme() ?? 'light'];
+  const insets = useSafeAreaInsets();
   const { user, setSession } = useAuthStore();
   const { setAvatarUri, avatarUri } = useUserStore();
 
@@ -126,7 +128,7 @@ export default function EditProfileScreen() {
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: c.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]} keyboardShouldPersistTaps="handled">
 
         {/* Header */}
         <View style={styles.header}>
@@ -188,7 +190,7 @@ export default function EditProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 24, paddingTop: 60 },
+  content: { padding: 24 },
   header: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginBottom: 32,

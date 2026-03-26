@@ -138,7 +138,9 @@ export default function HomeScreen() {
               {challengeDoneToday ? '✓ Challenge Complete' : "Complete Today's Challenge"}
             </ThemedText>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtnOutline, { borderColor: c.tint }]}>
+          <TouchableOpacity
+            style={[styles.actionBtnOutline, { borderColor: c.tint }]}
+            onPress={() => router.push('/(tabs)/profile')}>
             <ThemedText style={[styles.actionBtnOutlineText, { color: c.tint }]}>
               View My Progress
             </ThemedText>

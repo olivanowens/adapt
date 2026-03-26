@@ -1,125 +1,158 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUserStore } from '@/store/useUserStore';
 
-const LEVEL_NAMES = ['Newcomer', 'Learner', 'Adapter', 'Challenger', 'Achiever', 'Master'];
+const LEVELS_DATA = [
+  { level: 1,  title: 'Level 1',  subtitle: 'Getting Started',     xpRequired: 0     },
+  { level: 2,  title: 'Level 2',  subtitle: 'Building Habits',      xpRequired: 100   },
+  { level: 3,  title: 'Level 3',  subtitle: 'Calling & Contacts',   xpRequired: 250   },
+  { level: 4,  title: 'Level 4',  subtitle: 'Deep Focus',           xpRequired: 500   },
+  { level: 5,  title: 'Level 5',  subtitle: 'Mental Strength',      xpRequired: 900   },
+  { level: 6,  title: 'Level 6',  subtitle: 'Leadership',           xpRequired: 1500  },
+  { level: 7,  title: 'Level 7',  subtitle: 'Resilience',           xpRequired: 2500  },
+  { level: 8,  title: 'Level 8',  subtitle: 'Mastery',              xpRequired: 4000  },
+  { level: 9,  title: 'Level 9',  subtitle: 'Elite Performance',    xpRequired: 6000  },
+  { level: 10, title: 'Level 10', subtitle: 'ADAPT Master',         xpRequired: 10000 },
+];
 
 export default function LevelsScreen() {
   const colorScheme = useColorScheme() ?? 'light';
-  const colors = Colors[colorScheme];
+  const c = Colors[colorScheme];
+  const { level: currentLevel } = useUserStore();
 
-  const { xp, level, levelThresholds } = useUserStore();
-
-  const currentThreshold = levelThresholds[level - 1] ?? 0;
-  const nextThreshold = levelThresholds[level] ?? xp;
-  const progress = nextThreshold > currentThreshold
-    ? (xp - currentThreshold) / (nextThreshold - currentThreshold)
-    : 1;
+  // Render top-to-bottom: 10 down to 1
+  const levelsDescending = [...LEVELS_DATA].reverse();
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: c.background }]}
       contentContainerStyle={styles.content}>
 
-      {/* Header */}
-      <ThemedView style={styles.header}>
-        <ThemedText style={styles.title}>Levels</ThemedText>
-        <ThemedText style={[styles.subtitle, { color: colors.icon }]}>
-          Your progression journey
-        </ThemedText>
-      </ThemedView>
+      <View style={styles.pathContainer}>
+        {/* Vertical connecting line */}
+        <View style={[styles.connectingLine, { backgroundColor: c.line }]} />
 
-      {/* Current Level Card */}
-      <View style={[styles.currentCard, { backgroundColor: colors.tint }]}>
-        <ThemedText style={styles.currentLevelNum}>Level {level}</ThemedText>
-        <ThemedText style={styles.currentLevelTitle}>{LEVEL_NAMES[level - 1]}</ThemedText>
-        <ThemedText style={styles.xpText}>
-          {xp} XP{nextThreshold ? ` / ${nextThreshold} XP` : ''}
-        </ThemedText>
-        <View style={styles.progressBg}>
-          <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
-        </View>
-        {levelThresholds[level] !== undefined && (
-          <ThemedText style={styles.nextLevelText}>
-            {nextThreshold - xp} XP to Level {level + 1}
-          </ThemedText>
-        )}
-      </View>
-
-      {/* All Levels */}
-      <ThemedView style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>All Levels</ThemedText>
-        {LEVEL_NAMES.map((name, i) => {
-          const lvlNum = i + 1;
-          const required = levelThresholds[i] ?? 0;
-          const unlocked = xp >= required;
-          const isCurrent = lvlNum === level;
+        {levelsDescending.map((item, index) => {
+          const isCompleted = item.level < currentLevel;
+          const isCurrent = item.level === currentLevel;
+          const isLocked = item.level > currentLevel;
+          const stepsAboveCurrent = item.level - currentLevel;
+          const opacity = isLocked ? Math.max(0.2, 1 - stepsAboveCurrent * 0.12) : 1;
 
           return (
-            <ThemedView
-              key={lvlNum}
-              style={[
-                styles.levelRow,
-                {
-                  borderColor: isCurrent ? colors.tint : colors.icon,
-                  opacity: unlocked ? 1 : 0.4,
-                },
-              ]}>
-              <View style={[styles.levelBadge, { backgroundColor: unlocked ? colors.tint : colors.icon }]}>
-                <ThemedText style={styles.levelBadgeText}>{lvlNum}</ThemedText>
-              </View>
-              <ThemedView style={styles.levelInfo}>
-                <ThemedText style={styles.levelTitle}>{name}</ThemedText>
-                <ThemedText style={[styles.levelXP, { color: colors.icon }]}>
-                  {required} XP required
-                </ThemedText>
-              </ThemedView>
+            <View key={item.level} style={[styles.levelRow, { opacity }]}>
+
+              {/* ── CURRENT level card ── */}
               {isCurrent && (
-                <ThemedText style={[styles.currentBadge, { color: colors.tint }]}>
-                  CURRENT
-                </ThemedText>
+                <View style={[styles.currentCard, { backgroundColor: c.background, borderColor: c.line }]}>
+                  <View style={styles.currentCardHeader}>
+                    <ThemedText style={styles.starIcon}>⭐</ThemedText>
+                    <ThemedText style={[styles.currentTitle, { color: c.text }]}>{item.title}</ThemedText>
+                  </View>
+                  <ThemedText style={[styles.currentSubtitle, { color: c.text }]}>{item.subtitle}</ThemedText>
+                  <ThemedText style={[styles.currentUnlocks, { color: c.icon }]}>→ Unlocks sub-lessons</ThemedText>
+                </View>
               )}
-              {!unlocked && (
-                <ThemedText style={{ fontSize: 18 }}>🔒</ThemedText>
+
+              {/* ── COMPLETED level card ── */}
+              {isCompleted && (
+                <View style={[styles.completedCard, { backgroundColor: c.completedCard }]}>
+                  <ThemedText style={styles.completedCheck}>✓</ThemedText>
+                  <ThemedText style={styles.completedTitle}>{item.title}</ThemedText>
+                  <ThemedText style={styles.lockIcon}>🔒</ThemedText>
+                </View>
               )}
-            </ThemedView>
+
+              {/* ── LOCKED level card ── */}
+              {isLocked && (
+                <View style={[styles.lockedCard, { backgroundColor: c.card }]}>
+                  <ThemedText style={[styles.lockedTitle, { color: c.text }]}>
+                    {item.title.toUpperCase()}
+                  </ThemedText>
+                  {stepsAboveCurrent === 1 && (
+                    <ThemedText style={[styles.lockIcon, { opacity: 0.6 }]}>🔒</ThemedText>
+                  )}
+                </View>
+              )}
+
+            </View>
           );
         })}
-      </ThemedView>
-
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 24, paddingTop: 60 },
-  header: { marginBottom: 24 },
-  title: { fontSize: 32, fontWeight: '800' },
-  subtitle: { fontSize: 16, marginTop: 4 },
-  currentCard: { borderRadius: 16, padding: 24, marginBottom: 24 },
-  currentLevelNum: { fontSize: 14, fontWeight: '700', color: '#fff', opacity: 0.8 },
-  currentLevelTitle: { fontSize: 28, fontWeight: '800', color: '#fff', marginBottom: 8 },
-  xpText: { fontSize: 14, color: '#fff', opacity: 0.9, marginBottom: 12 },
-  progressBg: {
-    height: 8, backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 4, marginBottom: 8,
+  content: { paddingVertical: 40, paddingHorizontal: 24 },
+
+  pathContainer: {
+    position: 'relative',
+    alignItems: 'center',
   },
-  progressFill: { height: 8, backgroundColor: '#fff', borderRadius: 4 },
-  nextLevelText: { fontSize: 13, color: '#fff', opacity: 0.8 },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+
+  connectingLine: {
+    position: 'absolute',
+    width: 2,
+    top: 0,
+    bottom: 0,
+    left: '50%',
+    marginLeft: -1,
+  },
+
   levelRow: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 10, gap: 12,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 12,
+    zIndex: 1,
   },
-  levelBadge: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  levelBadgeText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  levelInfo: { flex: 1 },
-  levelTitle: { fontWeight: '600', fontSize: 16 },
-  levelXP: { fontSize: 12, marginTop: 2 },
-  currentBadge: { fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+
+  // Current
+  currentCard: {
+    width: '90%',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderRadius: 16,
+    padding: 18,
+  },
+  currentCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  starIcon: { fontSize: 20 },
+  currentTitle: { fontSize: 22, fontWeight: '700' },
+  currentSubtitle: { fontSize: 15, fontWeight: '500', marginBottom: 4 },
+  currentUnlocks: { fontSize: 13 },
+
+  // Completed
+  completedCard: {
+    width: '85%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    gap: 10,
+  },
+  completedCheck: { fontSize: 18, color: '#fff', fontWeight: '700' },
+  completedTitle: { flex: 1, fontSize: 18, fontWeight: '600', color: '#fff' },
+  lockIcon: { fontSize: 16 },
+
+  // Locked
+  lockedCard: {
+    width: '82%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    gap: 10,
+  },
+  lockedTitle: { fontSize: 14, fontWeight: '600', letterSpacing: 1.5, flex: 1, textAlign: 'center' },
 });

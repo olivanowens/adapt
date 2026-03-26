@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity, Switch, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
@@ -10,6 +11,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 export default function ProfileScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
+  const insets = useSafeAreaInsets();
 
   const { name, username, xp, level, streak, daysActive, isDarkMode, toggleDarkMode, avatarUri } = useUserStore();
   const { signOut, user } = useAuthStore();
@@ -36,7 +38,7 @@ export default function ProfileScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}>
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}>
 
       {/* Avatar + Name */}
       <ThemedView style={styles.profileHeader}>
@@ -117,7 +119,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 24, paddingTop: 60 },
+  content: { padding: 24 },
   profileHeader: { alignItems: 'center', marginBottom: 28 },
   avatar: {
     width: 88, height: 88, borderRadius: 44,

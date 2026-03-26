@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useUserStore } from '@/store/useUserStore';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
@@ -15,23 +16,30 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { setSession } = useAuthStore();
+  const { onboardingDone } = useUserStore();
+
+  function routeAfterLogin() {
+    if (!onboardingDone) {
+      router.replace('/onboarding');
+    } else {
+      router.replace('/(tabs)');
+    }
+  }
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
-        router.replace('/(tabs)');
+        routeAfterLogin();
       } else {
         router.replace('/(auth)/login');
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
-        router.replace('/(tabs)');
+        routeAfterLogin();
       } else {
         router.replace('/(auth)/login');
       }

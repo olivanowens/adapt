@@ -35,6 +35,7 @@ interface UserState {
   completedLessons: string[]; // lesson IDs
   quizAttempts: Record<string, number>; // levelKey -> attempts used
   placementDone: Record<string, boolean>; // track -> placement test completed
+  onboardingDone: boolean;
 
   // Level-up notification
   justLeveledUp: number | null; // the new level number, null if no level-up
@@ -50,6 +51,7 @@ interface UserState {
   recordQuizAttempt: (track: DeviceTrack, level: number) => void;
   getUnlockedLevel: (track: DeviceTrack) => number;
   markPlacementDone: (track: DeviceTrack) => void;
+  markOnboardingDone: () => void;
   addXP: (amount: number) => void;
   clearLevelUp: () => void;
   setName: (name: string) => void;
@@ -81,6 +83,7 @@ export const useUserStore = create<UserState>()(
       completedLessons: [],
       quizAttempts: {},
       placementDone: {},
+      onboardingDone: false,
 
       xpToNext: () => {
         const { xp, level } = get();
@@ -135,6 +138,8 @@ export const useUserStore = create<UserState>()(
       markPlacementDone: (track) => {
         set((state) => ({ placementDone: { ...state.placementDone, [track]: true } }));
       },
+
+      markOnboardingDone: () => set({ onboardingDone: true }),
 
       setName: (name) => set({ name }),
       setUsername: (username) => set({ username }),

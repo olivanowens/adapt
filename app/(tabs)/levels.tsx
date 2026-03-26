@@ -61,8 +61,8 @@ export default function LevelsScreen() {
               onPress={() => {
                 if (!isLocked) {
                   router.push({
-                    pathname: '/lesson',
-                    params: { track, levelNum: String(lvl.level), lessonIndex: '0' },
+                    pathname: '/level-detail',
+                    params: { track, levelNum: String(lvl.level) },
                   });
                 }
               }}

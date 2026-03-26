@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity, Switch, Alert } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Switch, Alert, Image } from 'react-native';
+import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
@@ -10,7 +11,7 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
 
-  const { name, username, xp, level, streak, daysActive, isDarkMode, toggleDarkMode } = useUserStore();
+  const { name, username, xp, level, streak, daysActive, isDarkMode, toggleDarkMode, avatarUri } = useUserStore();
   const { signOut, user } = useAuthStore();
 
   const displayName = user?.user_metadata?.full_name ?? name;
@@ -39,11 +40,21 @@ export default function ProfileScreen() {
 
       {/* Avatar + Name */}
       <ThemedView style={styles.profileHeader}>
-        <View style={[styles.avatar, { backgroundColor: colors.tint }]}>
-          <ThemedText style={styles.avatarText}>{firstLetter}</ThemedText>
-        </View>
+        {avatarUri || user?.user_metadata?.avatar_url ? (
+          <Image
+            source={{ uri: user?.user_metadata?.avatar_url ?? avatarUri! }}
+            style={styles.avatarImg}
+          />
+        ) : (
+          <View style={[styles.avatar, { backgroundColor: colors.tint }]}>
+            <ThemedText style={styles.avatarText}>{firstLetter}</ThemedText>
+          </View>
+        )}
         <ThemedText style={styles.name}>{displayName}</ThemedText>
         <ThemedText style={[styles.username, { color: colors.icon }]}>{displayEmail || username}</ThemedText>
+        {user?.user_metadata?.bio ? (
+          <ThemedText style={[styles.bio, { color: colors.icon }]}>{user.user_metadata.bio}</ThemedText>
+        ) : null}
       </ThemedView>
 
       {/* Stats Grid */}
@@ -73,13 +84,14 @@ export default function ProfileScreen() {
         </View>
 
         {[
-          { label: 'Edit Profile', icon: '✏️' },
-          { label: 'Notifications', icon: '🔔' },
-          { label: 'Privacy', icon: '🔒' },
-          { label: 'Help & Support', icon: '💬' },
+          { label: 'Edit Profile', icon: '✏️', onPress: () => router.push('/edit-profile') },
+          { label: 'Notifications', icon: '🔔', onPress: undefined },
+          { label: 'Privacy', icon: '🔒', onPress: undefined },
+          { label: 'Help & Support', icon: '💬', onPress: undefined },
         ].map((item, index, arr) => (
           <TouchableOpacity
             key={item.label}
+            onPress={item.onPress}
             style={[
               styles.settingRow,
               { borderColor: colors.icon },
@@ -111,9 +123,11 @@ const styles = StyleSheet.create({
     width: 88, height: 88, borderRadius: 44,
     alignItems: 'center', justifyContent: 'center', marginBottom: 14,
   },
+  avatarImg: { width: 88, height: 88, borderRadius: 44, marginBottom: 14 },
   avatarText: { fontSize: 36, fontWeight: '700', color: '#fff' },
   name: { fontSize: 24, fontWeight: '700' },
   username: { fontSize: 14, marginTop: 4 },
+  bio: { fontSize: 14, marginTop: 6, textAlign: 'center', lineHeight: 20 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 28 },
   statCard: { width: '47%', borderRadius: 12, borderWidth: 1, padding: 16, alignItems: 'center' },
   statValue: { fontSize: 24, fontWeight: '700' },

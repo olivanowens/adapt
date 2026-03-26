@@ -7,14 +7,41 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUserStore } from '@/store/useUserStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import {
+  requestNotificationPermission,
+  scheduleDailyStreakReminder,
+  cancelAllNotifications,
+} from '@/lib/notifications';
 
 export default function ProfileScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const insets = useSafeAreaInsets();
 
-  const { name, username, xp, level, streak, daysActive, isDarkMode, toggleDarkMode, avatarUri } = useUserStore();
+  const {
+    name, username, xp, level, streak, daysActive,
+    isDarkMode, toggleDarkMode, avatarUri,
+    notificationsEnabled, setNotificationsEnabled,
+  } = useUserStore();
   const { signOut, user } = useAuthStore();
+
+  async function handleNotificationsToggle(value: boolean) {
+    if (value) {
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        setNotificationsEnabled(true);
+        scheduleDailyStreakReminder();
+      } else {
+        Alert.alert(
+          'Permission Required',
+          'Please enable notifications in your iPhone Settings to receive reminders.',
+        );
+      }
+    } else {
+      setNotificationsEnabled(false);
+      cancelAllNotifications();
+    }
+  }
 
   const displayName = user?.user_metadata?.full_name ?? name;
   const displayEmail = user?.email ?? '';
@@ -85,9 +112,20 @@ export default function ProfileScreen() {
           />
         </View>
 
+        {/* Notifications Toggle */}
+        <View style={[styles.settingRow, { borderColor: colors.icon }]}>
+          <ThemedText style={styles.settingIcon}>🔔</ThemedText>
+          <ThemedText style={styles.settingLabel}>Notifications</ThemedText>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={handleNotificationsToggle}
+            trackColor={{ false: '#ccc', true: colors.tint }}
+            thumbColor="#fff"
+          />
+        </View>
+
         {[
           { label: 'Edit Profile', icon: '✏️', onPress: () => router.push('/edit-profile') },
-          { label: 'Notifications', icon: '🔔', onPress: undefined },
           { label: 'Privacy', icon: '🔒', onPress: undefined },
           { label: 'Help & Support', icon: '💬', onPress: undefined },
         ].map((item, index, arr) => (

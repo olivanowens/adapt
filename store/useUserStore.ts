@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { LEVEL_THRESHOLDS } from '@/constants/xp';
 import type { DeviceTrack } from '@/data/curriculum';
+import { sendLevelUpNotification } from '@/lib/notifications';
 
 function calcLevel(xp: number): number {
   let level = 1;
@@ -36,6 +37,7 @@ interface UserState {
   quizAttempts: Record<string, number>; // levelKey -> attempts used
   placementDone: Record<string, boolean>; // track -> placement test completed
   onboardingDone: boolean;
+  notificationsEnabled: boolean;
 
   // Level-up notification
   justLeveledUp: number | null; // the new level number, null if no level-up
@@ -52,6 +54,7 @@ interface UserState {
   getUnlockedLevel: (track: DeviceTrack) => number;
   markPlacementDone: (track: DeviceTrack) => void;
   markOnboardingDone: () => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
   addXP: (amount: number) => void;
   clearLevelUp: () => void;
   setName: (name: string) => void;
@@ -84,6 +87,7 @@ export const useUserStore = create<UserState>()(
       quizAttempts: {},
       placementDone: {},
       onboardingDone: false,
+      notificationsEnabled: false,
 
       xpToNext: () => {
         const { xp, level } = get();
@@ -96,6 +100,7 @@ export const useUserStore = create<UserState>()(
           const newXP = state.xp + amount;
           const newLevel = calcLevel(newXP);
           const didLevelUp = newLevel > state.level;
+          if (didLevelUp) sendLevelUpNotification(newLevel);
           return {
             xp: newXP,
             level: newLevel,
@@ -140,6 +145,8 @@ export const useUserStore = create<UserState>()(
       },
 
       markOnboardingDone: () => set({ onboardingDone: true }),
+
+      setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
 
       setName: (name) => set({ name }),
       setUsername: (username) => set({ username }),

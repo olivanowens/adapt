@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUserStore } from '@/store/useUserStore';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { requestNotificationPermission, scheduleDailyStreakReminder } from '@/lib/notifications';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -16,7 +17,7 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { setSession } = useAuthStore();
-  const { onboardingDone } = useUserStore();
+  const { onboardingDone, notificationsEnabled, setNotificationsEnabled } = useUserStore();
 
   function routeAfterLogin() {
     if (!onboardingDone) {
@@ -25,6 +26,16 @@ export default function RootLayout() {
       router.replace('/(tabs)');
     }
   }
+
+  useEffect(() => {
+    // Request notification permission once; schedule daily reminder if granted
+    requestNotificationPermission().then((granted) => {
+      if (granted && !notificationsEnabled) {
+        setNotificationsEnabled(true);
+        scheduleDailyStreakReminder();
+      }
+    });
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

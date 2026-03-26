@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { LevelUpModal } from '@/components/level-up-modal';
 import { XP_VALUES } from '@/constants/xp';
 import { TECH_OF_THE_DAY, VOCAB_OF_THE_DAY } from '@/data/curriculum';
+import { sendChallengeCompleteNotification } from '@/lib/notifications';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -50,6 +51,7 @@ export default function HomeScreen() {
     if (challengeDoneToday) return;
     addXP(XP_VALUES.COMPLETE_CHALLENGE);
     setChallengeDoneToday(true);
+    sendChallengeCompleteNotification();
   }
 
   return (

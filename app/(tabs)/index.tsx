@@ -1,98 +1,118 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { useEffect } from 'react';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useUserStore } from '@/store/useUserStore';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const colorScheme = useColorScheme() ?? 'light';
+  const colors = Colors[colorScheme];
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
+  const { name, xp, level, streak, levelThresholds, checkAndUpdateStreak, addXP } = useUserStore();
+
+  const currentThreshold = levelThresholds[level - 1] ?? 0;
+  const nextThreshold = levelThresholds[level] ?? xp;
+  const progress = nextThreshold > currentThreshold
+    ? (xp - currentThreshold) / (nextThreshold - currentThreshold)
+    : 1;
+  const xpToNext = nextThreshold - xp;
+
+  useEffect(() => {
+    checkAndUpdateStreak();
+  }, []);
+
+  return (
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}>
+
+      {/* Header */}
+      <ThemedView style={styles.header}>
+        <ThemedText style={styles.appName}>ADAPT</ThemedText>
+        <ThemedText style={[styles.greeting, { color: colors.icon }]}>
+          Welcome back, {name.split(' ')[0]} 👋
         </ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+
+      {/* Today's Focus Card */}
+      <View style={[styles.focusCard, { backgroundColor: colors.tint }]}>
+        <ThemedText style={styles.focusLabel}>TODAY'S FOCUS</ThemedText>
+        <ThemedText style={styles.focusTitle}>Keep the streak alive</ThemedText>
+        <ThemedText style={styles.focusSub}>Complete today's challenge to earn XP</ThemedText>
+
+        {/* Progress bar */}
+        <View style={styles.progressBg}>
+          <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
+        </View>
+        <ThemedText style={styles.progressText}>
+          {xp} XP — {xpToNext > 0 ? `${xpToNext} XP to Level ${level + 1}` : 'Max Level!'}
         </ThemedText>
+      </View>
+
+      {/* Stats Row */}
+      <ThemedView style={styles.statsRow}>
+        <ThemedView style={[styles.statCard, { borderColor: colors.icon }]}>
+          <ThemedText style={styles.statValue}>{streak}</ThemedText>
+          <ThemedText style={[styles.statLabel, { color: colors.icon }]}>Day Streak</ThemedText>
+        </ThemedView>
+        <ThemedView style={[styles.statCard, { borderColor: colors.icon }]}>
+          <ThemedText style={styles.statValue}>Lv {level}</ThemedText>
+          <ThemedText style={[styles.statLabel, { color: colors.icon }]}>Current Level</ThemedText>
+        </ThemedView>
+        <ThemedView style={[styles.statCard, { borderColor: colors.icon }]}>
+          <ThemedText style={styles.statValue}>{xp}</ThemedText>
+          <ThemedText style={[styles.statLabel, { color: colors.icon }]}>Total XP</ThemedText>
+        </ThemedView>
       </ThemedView>
-    </ParallaxScrollView>
+
+      {/* Quick Actions */}
+      <ThemedView style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
+        <TouchableOpacity
+          style={[styles.actionBtn, { backgroundColor: colors.tint }]}
+          onPress={() => addXP(50)}>
+          <ThemedText style={styles.actionBtnText}>Complete Today's Challenge (+50 XP)</ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.actionBtnOutline, { borderColor: colors.tint }]}>
+          <ThemedText style={[styles.actionBtnOutlineText, { color: colors.tint }]}>
+            View My Progress
+          </ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: { flex: 1 },
+  content: { padding: 24, paddingTop: 60 },
+  header: { marginBottom: 24 },
+  appName: { fontSize: 32, fontWeight: '800', letterSpacing: 2 },
+  greeting: { fontSize: 16, marginTop: 4 },
+  focusCard: { borderRadius: 16, padding: 24, marginBottom: 24 },
+  focusLabel: {
+    fontSize: 11, fontWeight: '700', letterSpacing: 1.5,
+    color: '#fff', opacity: 0.8, marginBottom: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  focusTitle: { fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 4 },
+  focusSub: { fontSize: 14, color: '#fff', opacity: 0.85, marginBottom: 16 },
+  progressBg: {
+    height: 8, backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 4, marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  progressFill: { height: 8, backgroundColor: '#fff', borderRadius: 4 },
+  progressText: { fontSize: 13, color: '#fff', opacity: 0.85 },
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  statCard: { flex: 1, borderRadius: 12, borderWidth: 1, padding: 16, alignItems: 'center' },
+  statValue: { fontSize: 20, fontWeight: '700' },
+  statLabel: { fontSize: 11, marginTop: 4, textAlign: 'center' },
+  section: { marginBottom: 24 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  actionBtn: { borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 10 },
+  actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  actionBtnOutline: { borderRadius: 12, borderWidth: 2, padding: 16, alignItems: 'center' },
+  actionBtnOutlineText: { fontWeight: '700', fontSize: 16 },
 });

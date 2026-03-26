@@ -1,0 +1,177 @@
+ADAPT - Full Roadmap to Working Demo
+======================================
+Last updated: 2026-03-25
+
+LEGEND: [ ] = to do | [~] = in progress | [x] = done
+
+==============================================
+PHASE 1 — FOUNDATION (App Skeleton)
+==============================================
+
+[x] Set up Expo React Native project
+[x] Build Home screen (dashboard)
+[x] Build Levels screen (progression)
+[x] Build Profile screen (user info + settings)
+[x] Set up 3-tab navigation (Home, Levels, Profile)
+[ ] Set up state management (Zustand or React Context)
+[ ] Set up local storage (AsyncStorage — saves data when app closes)
+[ ] Connect state to all 3 screens so they share real data
+[ ] Replace all hardcoded fake data with real state values
+
+==============================================
+PHASE 2 — AUTHENTICATION (Who Are You?)
+==============================================
+
+[ ] Build Sign Up screen (name, email, password)
+[ ] Build Login screen (email, password)
+[ ] Build Forgot Password screen
+[ ] Set up Supabase (free backend + database service)
+[ ] Connect Sign Up to Supabase (creates real account)
+[ ] Connect Login to Supabase (signs you in)
+[ ] Connect Forgot Password to Supabase (sends reset email)
+[ ] Store logged-in user session (stay logged in between opens)
+[ ] Build logout functionality on Profile screen
+[ ] Protect screens — redirect to login if not signed in
+[ ] Show real user name and email on Profile screen after login
+
+==============================================
+PHASE 3 — USER PROFILE
+==============================================
+
+[ ] Let user set their display name
+[ ] Let user pick a profile photo (camera or gallery)
+[ ] Upload and store profile photo in Supabase Storage
+[ ] Show real profile photo in Profile screen and avatar
+[ ] Let user edit their bio or tagline
+[ ] Save all profile changes to database
+
+==============================================
+PHASE 4 — XP, LEVELS & STREAKS (Core Game Loop)
+==============================================
+
+[ ] Define XP values for each action (completing challenge, logging in, etc.)
+[ ] Build XP awarding logic (function that adds XP to user)
+[ ] Build level-up logic (check if XP crosses a threshold, level up)
+[ ] Build streak tracking (did user complete something today?)
+[ ] Build streak reset logic (missed a day = streak goes to 0)
+[ ] Store XP, level, and streak in database (per user)
+[ ] Show real XP, level, streak on Home screen
+[ ] Show real XP, level, streak on Profile screen
+[ ] Animate level-up moment (celebration screen or popup)
+[ ] Show XP gain animation when user earns points
+
+==============================================
+PHASE 5 — CHALLENGES SYSTEM (The Heart of the App)
+==============================================
+
+[ ] Define what a challenge IS (title, description, XP reward, type, difficulty)
+[ ] Create a challenges database table in Supabase
+[ ] Seed the database with starter challenges
+[ ] Build Challenge Detail screen (shows full challenge info)
+[ ] Build "Complete Challenge" button + confirmation
+[ ] Award XP when challenge is completed
+[ ] Mark challenge as done for the day (can't repeat same day)
+[ ] Build Daily Challenge logic (one featured challenge per day)
+[ ] Show today's challenge on Home screen
+[ ] Build challenge history (what challenges you've completed)
+[ ] Build challenge categories or types (if applicable)
+
+==============================================
+PHASE 6 — NAVIGATION & SCREEN FLOW
+==============================================
+
+[ ] Build proper onboarding flow (shown only on first open)
+[ ] Onboarding screen 1 — Welcome to ADAPT
+[ ] Onboarding screen 2 — How it works
+[ ] Onboarding screen 3 — Set your first goal
+[ ] Route new users to onboarding, returning users to Home
+[ ] Build Challenge Detail screen (navigate to it from Home)
+[ ] Build Level Detail screen (tap a level to see what it unlocks)
+[ ] Add back buttons and proper navigation between all screens
+[ ] Handle deep links (open app to a specific screen from a notification)
+
+==============================================
+PHASE 7 — NOTIFICATIONS
+==============================================
+
+[ ] Set up expo-notifications
+[ ] Ask user for notification permission on first open
+[ ] Daily reminder notification ("Don't break your streak!")
+[ ] Level-up notification ("You reached Level 4!")
+[ ] Challenge completion confirmation notification
+[ ] Let user turn notifications on/off in Settings
+
+==============================================
+PHASE 8 — SETTINGS & ACCOUNT
+==============================================
+
+[ ] Build working Settings screen (inside Profile tab)
+[ ] Toggle: push notifications on/off
+[ ] Toggle: dark mode / light mode
+[ ] Link: Privacy Policy page
+[ ] Link: Terms of Service page
+[ ] Link: Help / Contact page
+[ ] Delete Account option (with confirmation)
+[ ] Sign Out button (works and clears session)
+
+==============================================
+PHASE 9 — DESIGN & BRANDING
+==============================================
+
+[ ] Finalize ADAPT color palette
+[ ] Replace default Expo app icon with ADAPT icon
+[ ] Replace default splash screen with ADAPT splash screen
+[ ] Apply consistent fonts throughout the app
+[ ] Design and apply empty states (what shows when there's no data)
+[ ] Add loading spinners where data is being fetched
+[ ] Add error messages when something goes wrong
+[ ] Make sure everything looks good on small phones (iPhone SE size)
+[ ] Make sure everything looks good on large phones (iPhone Pro Max size)
+[ ] Dark mode — make sure all screens look good in dark mode
+
+==============================================
+PHASE 10 — TESTING & DEMO PREP
+==============================================
+
+[ ] Test every screen on iOS simulator
+[ ] Test every screen on Android emulator
+[ ] Test on a real iPhone device
+[ ] Test on a real Android device
+[ ] Fix any crashes or broken layouts found during testing
+[ ] Test full user journey: sign up → complete challenge → level up
+[ ] Test streak logic: complete today, skip a day, check reset
+[ ] Test login/logout flow works cleanly
+[ ] Remove all fake/hardcoded placeholder data
+[ ] Make sure no console errors or warnings in final build
+
+==============================================
+PHASE 11 — DEMO BUILD
+==============================================
+
+[ ] Create a demo user account with sample data pre-filled
+[ ] Make sure demo looks impressive (good XP, a few levels unlocked)
+[ ] Build an internal test version (Expo Go or TestFlight)
+[ ] Share demo link or TestFlight invite
+[ ] Record a screen recording walkthrough of the demo
+[ ] Write a short demo script (what to show and in what order)
+
+==============================================
+FUTURE / POST-DEMO (Don't build yet)
+==============================================
+
+[ ] Social features (friends, leaderboard)
+[ ] In-app purchases or premium tier
+[ ] Web version of the app
+[ ] Admin dashboard to manage challenges
+[ ] Analytics (how many users, retention, etc.)
+[ ] App Store submission (iOS)
+[ ] Google Play submission (Android)
+
+==============================================
+NOTES / INFO FROM OLIVIA
+==============================================
+(Add app-specific details here as you share them)
+- App name: ADAPT
+- Platform: React Native / Expo
+- Backend: Supabase (planned)
+
